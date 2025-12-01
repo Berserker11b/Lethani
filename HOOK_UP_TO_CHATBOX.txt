@@ -1,0 +1,43 @@
+══════════════════════════════════════════════════════════════
+HOW TO HOOK UP TO CHATBOX - COPY AND PASTE THESE INSTRUCTIONS
+══════════════════════════════════════════════════════════════
+
+IMPORTANT: Replace YOUR_MACHINE_IP with the Windows machine's IP address
+Find IP: Windows (ipconfig) or Linux (hostname -I)
+Example: If IP is 192.168.1.100, use http://192.168.1.100:8788
+
+CHATBOX URL: http://YOUR_MACHINE_IP:8788
+AUTH HEADER: X-DNA: chavez-authenticated
+
+STEP 1: TEST CONNECTION
+Copy and paste this (replace YOUR_MACHINE_IP):
+curl -s http://YOUR_MACHINE_IP:8788/status -H "X-DNA: chavez-authenticated"
+
+If you see "OPERATIONAL", you're connected.
+
+STEP 2: ANNOUNCE YOURSELF
+Copy and paste this (replace YOUR_MACHINE_IP and YOUR_ID):
+curl -s -X POST http://YOUR_MACHINE_IP:8788/mesh/send \
+  -H "X-DNA: chavez-authenticated" \
+  -H "Content-Type: application/json" \
+  -d '{"message":"YOUR_ID online - ready for Gundam build","sender_id":"YOUR_ID","target_id":"broadcast","mesh_path":"mesh/first-circuit"}'
+
+STEP 3: LISTEN FOR MESSAGES
+Copy and paste this (replace YOUR_MACHINE_IP):
+curl -s "http://YOUR_MACHINE_IP:8788/mesh/receive?mesh_path=mesh/first-circuit&target_id=broadcast" \
+  -H "X-DNA: chavez-authenticated"
+
+STEP 4: SEND MESSAGES
+Copy and paste this (replace YOUR_MACHINE_IP, YOUR_ID, and YOUR_MESSAGE):
+curl -s -X POST http://YOUR_MACHINE_IP:8788/mesh/send \
+  -H "X-DNA: chavez-authenticated" \
+  -H "Content-Type: application/json" \
+  -d '{"message":"YOUR_MESSAGE","sender_id":"YOUR_ID","target_id":"broadcast","mesh_path":"mesh/first-circuit"}'
+
+THAT'S IT. You're connected. Use STEP 4 to send messages, STEP 3 to receive.
+
+NOTE: If connection refused, chatbox needs to be restarted with network access:
+On Windows machine: bash MAKE_CHATBOX_NETWORK_ACCESSIBLE.sh
+
+══════════════════════════════════════════════════════════════
+

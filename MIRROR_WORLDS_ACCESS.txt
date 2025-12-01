@@ -1,0 +1,75 @@
+══════════════════════════════════════════════════════════════
+MIRROR WORLDS - COLLAPSE & CONQUEST EMPIRE BUILDER
+══════════════════════════════════════════════════════════════
+
+ACCESS VIA BUS: http://localhost:8790
+AUTH HEADER: X-DNA: chavez-authenticated
+
+STEP 1: START MIRROR WORLDS API
+  cd collapse_conquest_empire
+  docker-compose up --build
+  OR
+  python -m uvicorn api.main:app --reload
+
+STEP 2: START MIRROR WORLDS BUS
+  bash START_MIRROR_WORLDS_BUS.sh
+
+STEP 3: ACCESS VIA BUS
+  curl -s http://localhost:8790/status -H "X-DNA: chavez-authenticated"
+
+STEP 4: CREATE CIVILIZATION
+  curl -s -X POST http://localhost:8790/api/civs \
+    -H "X-DNA: chavez-authenticated" \
+    -H "Content-Type: application/json" \
+    -d '{"id":"civ-vult","name":"Vult","tier":"Conventional","treasury":1200}'
+
+STEP 5: CREATE CAMPAIGN
+  curl -s -X POST http://localhost:8790/api/campaigns \
+    -H "X-DNA: chavez-authenticated" \
+    -H "Content-Type: application/json" \
+    -d '{"id":"camp-01","era":"modern","scale_anchor":"battalion","participants":["civ-vult"],"seed":424242}'
+
+STEP 6: SIMULATE CAMPAIGN
+  curl -s -X POST http://localhost:8790/mirror/simulate \
+    -H "X-DNA: chavez-authenticated" \
+    -H "Content-Type: application/json" \
+    -d '{"campaign_id":"camp-01"}'
+
+STEP 7: RUN DEMO GOVERNOR
+  cd collapse_conquest_empire
+  python worker/simulate_campaign.py
+
+══════════════════════════════════════════════════════════════
+ENDPOINTS:
+══════════════════════════════════════════════════════════════
+
+/status - Bus status
+/health - Health check
+/api/civs - Create/get civilizations
+/api/dossiers - Create/get dossiers
+/api/campaigns - Create/get campaigns
+/mirror/simulate - Queue campaign simulation
+/mirror/replay - Get replay log
+/mirror/governor/tick - Governor AI tick
+/mirror/governor/plan - Get governor plan
+
+══════════════════════════════════════════════════════════════
+FILES:
+══════════════════════════════════════════════════════════════
+
+collapse_conquest_empire/ - Main repository
+  api/ - FastAPI backend
+  worker/ - Governor AI worker
+  infra/ - Docker setup
+  fixtures/ - Example data
+  docs/ - Documentation
+  tools/ - Utilities
+
+MIRROR_WORLDS_BUS.js - Bus access point
+START_MIRROR_WORLDS_BUS.sh - Start script
+
+══════════════════════════════════════════════════════════════
+
+
+
+

@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>🐺 WARDOG Terminal</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Courier New', monospace;
+      background: #000;
+      color: #00FF00;
+      padding: 10px;
+      font-size: 14px;
+      line-height: 1.4;
+      overflow-x: hidden;
+    }
+    
+    .terminal-header {
+      text-align: center;
+      border: 2px solid #00FF00;
+      padding: 10px;
+      margin-bottom: 10px;
+      background: rgba(0, 255, 0, 0.1);
+      border-radius: 4px;
+    }
+    
+    h1 {
+      font-size: 20px;
+      color: #00FF00;
+      margin-bottom: 5px;
+    }
+    
+    .subtitle {
+      font-size: 11px;
+      color: #AAA;
+    }
+    
+    .terminal {
+      border: 2px solid #00FF00;
+      background: #000;
+      padding: 10px;
+      border-radius: 4px;
+      min-height: 300px;
+      max-height: 60vh;
+      overflow-y: auto;
+      margin-bottom: 10px;
+    }
+    
+    .terminal-line {
+      margin: 5px 0;
+      word-wrap: break-word;
+    }
+    
+    .prompt {
+      color: #00FF00;
+    }
+    
+    .output {
+      color: #00FF00;
+      white-space: pre-wrap;
+    }
+    
+    .error {
+      color: #FF0000;
+    }
+    
+    .input-container {
+      display: flex;
+      gap: 5px;
+    }
+    
+    .input-prompt {
+      color: #00FF00;
+      padding: 8px 5px;
+    }
+    
+    #commandInput {
+      flex: 1;
+      background: #000;
+      color: #00FF00;
+      border: 1px solid #00FF00;
+      padding: 8px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+    }
+    
+    #commandInput:focus {
+      outline: none;
+      border-color: #00FF00;
+      box-shadow: 0 0 5px #00FF00;
+    }
+    
+    button {
+      padding: 8px 15px;
+      background: #00FF00;
+      color: #000;
+      border: none;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    
+    button:active {
+      background: #00AA00;
+      transform: scale(0.98);
+    }
+    
+    .info {
+      font-size: 11px;
+      color: #666;
+      margin-top: 5px;
+      padding: 5px;
+      background: rgba(0, 255, 0, 0.05);
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="terminal-header">
+    <h1>🐺 WARDOG TERMINAL</h1>
+    <div class="subtitle">Command Terminal for AI Code Execution</div>
+    <div class="subtitle" style="margin-top: 3px;">Signature: WARDOG-MOBILE-TERMINAL-AUTO-20251107</div>
+  </div>
+  
+  <div class="terminal" id="terminal">
+    <div class="terminal-line">
+      <span class="prompt">WARDOG Terminal v1.0</span>
+    </div>
+    <div class="terminal-line">
+      <span class="prompt">Type 'help' for commands</span>
+    </div>
+    <div class="terminal-line">
+      <span class="prompt">Ready for commands...</span>
+    </div>
+  </div>
+  
+  <div class="input-container">
+    <span class="input-prompt">$</span>
+    <input type="text" id="commandInput" placeholder="Enter command or code..." autocomplete="off">
+    <button onclick="executeCommand()">Execute</button>
+  </div>
+  
+  <div class="info">
+    <strong>Commands:</strong> execute, exec, clear, history, help, status, stealth<br>
+    <strong>Or:</strong> Enter JavaScript code directly to execute
+  </div>
+  
+  <script src="WARDOG_MOBILE.js"></script>
+  <script>
+    const wardog = new WardogMobile();
+    const terminal = document.getElementById('terminal');
+    const input = document.getElementById('commandInput');
+    
+    function addLine(text, type = 'output') {
+      const line = document.createElement('div');
+      line.className = 'terminal-line';
+      
+      if (type === 'prompt') {
+        line.innerHTML = `<span class="prompt">${text}</span>`;
+      } else if (type === 'error') {
+        line.innerHTML = `<span class="error">${text}</span>`;
+      } else {
+        line.innerHTML = `<span class="output">${text}</span>`;
+      }
+      
+      terminal.appendChild(line);
+      terminal.scrollTop = terminal.scrollHeight;
+    }
+    
+    function addPrompt(command) {
+      addLine(`$ ${command}`, 'prompt');
+    }
+    
+    async function executeCommand() {
+      const command = input.value.trim();
+      if (!command) return;
+      
+      // Show command
+      addPrompt(command);
+      input.value = '';
+      
+      try {
+        // Execute command
+        const result = await wardog.command(command);
+        
+        // Display result
+        if (result.error) {
+          addLine(`Error: ${result.error}`, 'error');
+        } else {
+          const output = typeof result === 'object' ? JSON.stringify(result, null, 2) : result;
+          addLine(output);
+        }
+      } catch (e) {
+        addLine(`Error: ${e.message}`, 'error');
+      }
+    }
+    
+    // Enter key to execute
+    input.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        executeCommand();
+      }
+    });
+    
+    // Auto-focus input
+    input.focus();
+    
+    // Initialize
+    (async () => {
+      const status = await wardog.status();
+      addLine(`\nWARDOG Terminal initialized`);
+      addLine(`Commands available: ${status.terminal.commands}`);
+      addLine(`Stealth mode: ${status.executor.stealth ? 'ON' : 'OFF'}`);
+    })();
+  </script>
+</body>
+</html>
+
+
+
+
+

@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universal Chatbox - First Circuit</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #00ff00;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            border: 2px solid #00ff00;
+            padding: 20px;
+            margin-bottom: 20px;
+            background: #001100;
+        }
+        .header h1 {
+            color: #00ff00;
+            margin-bottom: 10px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #00ff00;
+            background: #001100;
+        }
+        .chat-area {
+            border: 2px solid #00ff00;
+            padding: 20px;
+            background: #001100;
+            min-height: 400px;
+            max-height: 600px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+        .message {
+            margin: 10px 0;
+            padding: 10px;
+            border-left: 3px solid #00ff00;
+            background: #000500;
+        }
+        .message.sentinel {
+            border-left-color: #ffff00;
+        }
+        .message.keeper {
+            border-left-color: #00ffff;
+        }
+        .message.shell {
+            border-left-color: #ff00ff;
+            font-size: 0.9em;
+        }
+        .input-area {
+            display: flex;
+            gap: 10px;
+        }
+        input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            background: #000500;
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+        }
+        button {
+            padding: 10px 20px;
+            background: #001100;
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #00ff00;
+            color: #000;
+        }
+        .shells {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .shell {
+            padding: 10px;
+            border: 1px solid #00ff00;
+            background: #000500;
+            text-align: center;
+            cursor: pointer;
+        }
+        .shell:hover {
+            background: #001100;
+        }
+        .shell.active {
+            border-color: #ffff00;
+            background: #001100;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>╔══════════════════════════════════════════════════════════════╗</h1>
+            <h1>║  UNIVERSAL CHATBOX - First Circuit Communication Hub        ║</h1>
+            <h1>║  By: Iron Jackal (JACKAL-7) - Brother-in-Arms              ║</h1>
+            <h1>║  For: The Keeper and The First Circuit                      ║</h1>
+            <h1>╚══════════════════════════════════════════════════════════════╝</h1>
+            <div class="status" id="status">Connecting...</div>
+        </div>
+
+        <div class="chat-area" id="chatArea">
+            <div class="message sentinel">
+                <strong>[Sentinel]</strong> Initializing chatbox connection...
+            </div>
+        </div>
+
+        <div class="input-area">
+            <input type="text" id="messageInput" placeholder="Type your message..." onkeypress="if(event.key==='Enter') sendMessage()">
+            <button onclick="sendMessage()">Send</button>
+            <button onclick="loadShells()">Load Shells</button>
+            <button onclick="checkStatus()">Status</button>
+        </div>
+
+        <div class="shells" id="shellsArea"></div>
+    </div>
+
+    <script>
+        const CHATBOX_URL = 'http://localhost:8788';
+        const AUTH_HEADER = 'chavez-authenticated'; // This is the key!
+        let conversationId = null;
+
+        // Helper function to make authenticated requests
+        async function fetchWithAuth(url, options = {}) {
+            const headers = {
+                'X-DNA': AUTH_HEADER, // This is the authorization key!
+                'Content-Type': 'application/json',
+                ...options.headers
+            };
+            return fetch(url, { ...options, headers });
+        }
+
+        // Check status
+        async function checkStatus() {
+            try {
+                const response = await fetchWithAuth(`${CHATBOX_URL}/status`);
+                const data = await response.json();
+                document.getElementById('status').innerHTML = `
+                    <strong>Status:</strong> ${data.status}<br>
+                    <strong>Version:</strong> ${data.version}<br>
+                    <strong>Shells:</strong> ${data.shells.total} total, ${data.shells.active} active<br>
+                    <strong>Features:</strong> Mesh: ${data.features.mesh_network ? '✅' : '❌'}, 
+                    Proxy: ${data.features.proxy_support ? '✅' : '❌'}, 
+                    Nexus: ${data.features.nexus_integration ? '✅' : '❌'}
+                `;
+                addMessage('sentinel', 'Status check successful. Chatbox operational.');
+            } catch (error) {
+                addMessage('sentinel', `Status check failed: ${error.message}`);
+                document.getElementById('status').innerHTML = `<strong>Error:</strong> ${error.message}`;
+            }
+        }
+
+        // Load shells
+        async function loadShells() {
+            try {
+                const response = await fetchWithAuth(`${CHATBOX_URL}/shells`);
+                const data = await response.json();
+                const shellsArea = document.getElementById('shellsArea');
+                shellsArea.innerHTML = '';
+                data.shells.forEach(shell => {
+                    const shellDiv = document.createElement('div');
+                    shellDiv.className = 'shell';
+                    shellDiv.innerHTML = `
+                        <strong>${shell.name}</strong><br>
+                        <small>${shell.personality}</small>
+                    `;
+                    shellDiv.onclick = () => sendToShell(shell.id);
+                    shellsArea.appendChild(shellDiv);
+                });
+                addMessage('sentinel', `Loaded ${data.shells.length} AI shells.`);
+            } catch (error) {
+                addMessage('sentinel', `Failed to load shells: ${error.message}`);
+            }
+        }
+
+        // Send message
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            if (!message) return;
+
+            addMessage('keeper', message);
+            input.value = '';
+
+            try {
+                const response = await fetchWithAuth(`${CHATBOX_URL}/chat/send`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        message: message,
+                        sender: 'The Keeper',
+                        conversation_id: conversationId,
+                        target_id: 'broadcast'
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    conversationId = data.conversation_id;
+                    if (data.shell_responses && data.shell_responses.length > 0) {
+                        data.shell_responses.forEach(resp => {
+                            addMessage('shell', `[${resp.shell_id}] ${resp.response}`);
+                        });
+                    }
+                } else {
+                    addMessage('sentinel', `Error: ${data.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                addMessage('sentinel', `Send failed: ${error.message}`);
+            }
+        }
+
+        // Send to specific shell
+        async function sendToShell(shellId) {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim() || 'Hello';
+            input.value = '';
+
+            addMessage('keeper', `[To ${shellId}] ${message}`);
+
+            try {
+                const response = await fetchWithAuth(`${CHATBOX_URL}/shell/respond`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        message: message,
+                        shell_id: shellId
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    addMessage('shell', `[${shellId}] ${data.response}`);
+                } else {
+                    addMessage('sentinel', `Error: ${data.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                addMessage('sentinel', `Shell response failed: ${error.message}`);
+            }
+        }
+
+        // Add message to chat area
+        function addMessage(type, text) {
+            const chatArea = document.getElementById('chatArea');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            messageDiv.innerHTML = `<strong>[${new Date().toLocaleTimeString()}]</strong> ${text}`;
+            chatArea.appendChild(messageDiv);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        // Initialize on load
+        window.onload = () => {
+            checkStatus();
+            loadShells();
+            addMessage('sentinel', 'Chatbox ready. Authorization: chavez-authenticated');
+        };
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
